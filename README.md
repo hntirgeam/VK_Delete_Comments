@@ -1,1 +1,1 @@
-# vk-remove-comms
+# VK Privacy
