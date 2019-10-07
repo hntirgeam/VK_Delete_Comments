@@ -1,12 +1,16 @@
+# coding=utf-8
 import os
 import vk_api
-import webbrowser
+import time
 
 print('Инструкцию можно (желательно) посмотреть в видео по ссылке: ', '\n')
+print ('Выберите режим работы:', '1)Удаление комментариев', '2)Удаление постов',
+       '3)Удаление и комментариев и постов', sep = "\n")
 
+mode = input()
 
 def get_comments_paths():
-    print('Введите путь к папке с комментариями (папку можно просто перетащить в окно терминала)', '\n')
+    print('Введите путь к папке с комментариями (папку можно просто перетащить в окно терминала)')
     folder_path = input()
 
     user_files = [f.name for f in os.scandir(folder_path)]
@@ -34,11 +38,14 @@ def get_comments_urls(path_to_comment):
             i = 0
             str1 = 'https://vk.com'
             while i < len(content):
-                if content[i].find(str1) != -1:
+                if content[i].find(str1) != - 1:
                     tmp = content[i]
                     tmp = tmp[tmp.find(str1):]
-                    tmp = tmp[:(tmp.find('>') - 1)]
-                    all_urls.append(tmp)
+                    if tmp.find('>') == - 1:
+                        all_urls.append(tmp)
+                    else:
+                        tmp = tmp[:(tmp.find('>') - 1)]
+                        all_urls.append(tmp)
                 i += 1
         finally:
             file_with_comments.close()
@@ -47,27 +54,14 @@ def get_comments_urls(path_to_comment):
 
 urls = get_comments_urls(path)
 
-
-print('Для удаления постов/комментариев/лайков нужно войти в аккаунт или получить токен из приложения.', '\n',
-      'Если вы готовы ввести логин и пароль, введите 1. Если нет, то введите 2.', '\n')
-password_or_token = str(input())
-if password_or_token == '1':
-    print('Введите логин:')
-    login = input()
-    print('Введите пароль')
-    password = input()
-    vk_session = vk_api.VkApi(login, password)
-    vk_session.auth()
-    vk = vk_session.get_api()
-elif password_or_token == '2':
-    print('')  # сюда заебенить инструкцию для получения токена
-    webbrowser.open('https://yandex.ru')
-    token = input()
-    vk_session = vk_api.VkApi(token)  # сюда токен засунуть блятб
-    vk_session.auth()
-    vk = vk_session.get_api()
-elif password_or_token != '1' and password_or_token != '2':
-    print('Введён неверный параметр')
+print('Для удаления комментариев и/или постов нужно авторизироваться, предварительно отключив 2fa (привязку телефона)')
+print('Введите логин:')
+login = input()
+print('Введите пароль:')
+password = input()
+vk_session = vk_api.VkApi(login, password)
+vk_session.auth()
+vk = vk_session.get_api()
 
 
 def delete_comments(content):
@@ -90,7 +84,27 @@ def delete_comments(content):
             #  я в душее неебу, почему файл нужно открывать в except. Без этого не работает
         except:
             comments_not_deleted += 1
-            print("Не удалено:", comments_not_deleted)
+            print("Не удалено", comments_not_deleted)
 
 
-delete_comments(urls)
+def delete_wall_posts():
+    while True:
+        posts = vk.wall.get()
+        posts_index = 0
+        while True:
+            try:
+                post_id = posts["items"][posts_index]["id"]
+                vk.wall.delete(post_id=post_id)
+                posts_index += 1
+            except:
+                print('Что-то пошло не так')
+
+if mode == '1':
+    delete_comments(urls)
+elif mode == '2':
+    delete_wall_posts()
+elif mode == '3':
+    delete_comments(urls)
+    delete_wall_posts()
+else:
+    print('Нет такого параметра')
