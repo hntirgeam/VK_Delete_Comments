@@ -1,13 +1,11 @@
 # coding=utf-8
 import os
 import vk_api
-import time
 
-print('Инструкцию можно (желательно) посмотреть в видео по ссылке: ', '\n')
-print ('Выберите режим работы:', '1)Удаление комментариев', '2)Удаление постов',
-       '3)Удаление и комментариев и постов', sep = "\n")
-
+print('Выберите режим работы:', '\n', '1)Удаление комментариев', '\n', '2)Удаление постов',
+      '\n', '3)Удаление и комментариев и постов')
 mode = input()
+
 
 def get_comments_paths():
     print('Введите путь к папке с комментариями (папку можно просто перетащить в окно терминала)')
@@ -24,9 +22,6 @@ def get_comments_paths():
             paths_to_comments.append(folder_path + '/' + file)
             print(folder_path + '/' + file + '\n')
     return paths_to_comments
-
-
-path = get_comments_paths()
 
 
 def get_comments_urls(path_to_comment):
@@ -52,14 +47,12 @@ def get_comments_urls(path_to_comment):
     return all_urls
 
 
-urls = get_comments_urls(path)
-
 print('Для удаления комментариев и/или постов нужно авторизироваться, предварительно отключив 2fa (привязку телефона)')
 print('Введите логин:')
-login = input()
+user_login = input()
 print('Введите пароль:')
-password = input()
-vk_session = vk_api.VkApi(login, password)
+user_password = input()
+vk_session = vk_api.VkApi(user_login, user_password)
 vk_session.auth()
 vk = vk_session.get_api()
 
@@ -81,7 +74,6 @@ def delete_comments(content):
             vk.wall.deleteComment(owner_id=owner_id, comment_id=comment_id)
             comments_deleted += 1
             print("Удалено", comments_deleted)
-            #  я в душее неебу, почему файл нужно открывать в except. Без этого не работает
         except:
             comments_not_deleted += 1
             print("Не удалено", comments_not_deleted)
@@ -98,13 +90,15 @@ def delete_wall_posts():
                 posts_index += 1
             except:
                 print('Что-то пошло не так')
+                break
+
 
 if mode == '1':
-    delete_comments(urls)
+    delete_comments(get_comments_urls(get_comments_paths()))
 elif mode == '2':
     delete_wall_posts()
 elif mode == '3':
-    delete_comments(urls)
+    delete_comments(get_comments_urls(get_comments_paths()))
     delete_wall_posts()
 else:
     print('Нет такого параметра')
