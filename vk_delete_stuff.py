@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
     if mode == '1':
         print("Сейчас все комментарии будут удалены")
-        print("Ссылки на комментарии, которые невозможно удалить будут помещены в vk_del.hmtl")
+        print("Ссылки на комментарии, которые невозможно удалить будут помещены в vk_del.html")
         answer_checker()
         delete_comments(get_comments_urls(get_comments_paths()))
     elif mode == '2':
