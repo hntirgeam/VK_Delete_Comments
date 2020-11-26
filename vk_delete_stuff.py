@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding=utf-8
-import os
+
+from os import path, remove, scandir
 import vk_api
 
 
@@ -8,7 +9,7 @@ def get_comments_paths():
     print('Введите путь к папке с комментариями (папку можно просто перетащить в окно терминала)')
     folder_path = input()
 
-    user_files = [f.name for f in os.scandir(folder_path)]
+    user_files = [f.name for f in scandir(folder_path)]
     print('Загружены файлы:')
     paths_to_comments = []
     for file in user_files:
@@ -111,6 +112,14 @@ def answer_checker():
         exit(0)
 
 
+def vk_json_remover():
+    if path.exists("vk_config.v2.json"):
+        try:
+            remove("vk_config.v2.json")
+        except:
+            print("Ошибка при удалении файла vk_config.v2.json")
+
+
 if __name__ == '__main__':
     log_file_name = 'vk_del.html'
     print('Выберите режим работы:', '\n', '1)Удаление комментариев', '\n', '2)Удаление постов',
@@ -136,14 +145,17 @@ if __name__ == '__main__':
         print("Ссылки на комментарии, которые невозможно удалить будут помещены в vk_del.html")
         answer_checker()
         delete_comments(get_comments_urls(get_comments_paths()))
+        vk_json_remover()
     elif mode == '2':
         print("Сейчас все посты будут удалены")
         answer_checker()
         delete_wall_posts()
+        vk_json_remover()
     elif mode == '3':
         print("Сейчас все комментарии и посты будут удалены")
         answer_checker()
         delete_comments(get_comments_urls(get_comments_paths()))
         delete_wall_posts()
+        vk_json_remover()
     else:
         print('Нет такого параметра')
