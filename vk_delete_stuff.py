@@ -44,10 +44,27 @@ def get_comments_urls(path_to_comment):
     return all_urls
 
 
+def create_html_log_template():
+    log_file_descriptor = open(log_file_name, "w+")
+    log_file_descriptor.write('''
+    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>VK deletion log</TITLE>
+    </HEAD>
+    <BODY>
+    ''')
+    log_file_descriptor.close()
+
+
 def delete_comments(content):
     i = 0
     comments_deleted = 0
     comments_not_deleted = 0
+
+    create_html_log_template()
+
     while i < len(content):
         str1 = content[i]
         i += 1
@@ -56,7 +73,12 @@ def delete_comments(content):
             comment_id = str1[(str1.find('reply=') + 6):str1.find('&')]
         else:
             comment_id = str1[(str1.find('reply=') + 6):]
-        print(owner_id, comment_id)
+        info_about_comment = f"{owner_id}{comment_id}"
+        print(info_about_comment)
+        if info_about_comment.count("://"):
+            log_file_descriptor = open(log_file_name, "a")
+            log_file_descriptor.write("<a href=\"https://" + info_about_comment[3:] + "\">link</a></br>" + "\n")
+            log_file_descriptor.close()
         try:
             vk.wall.deleteComment(owner_id=owner_id, comment_id=comment_id)
             comments_deleted += 1
@@ -90,8 +112,9 @@ def answer_checker():
 
 
 if __name__ == '__main__':
+    log_file_name = 'vk_del.html'
     print('Выберите режим работы:', '\n', '1)Удаление комментариев', '\n', '2)Удаление постов',
-          '\n', '3)Удаление и комментариев и постов')
+          '\n', '3)Удаление комментариев и постов')
     mode = input("Выбраный режим работы (1,2,3): ")
 
     print(
@@ -110,6 +133,7 @@ if __name__ == '__main__':
 
     if mode == '1':
         print("Сейчас все комментарии будут удалены")
+        print("Ссылки на комментарии, которые невозможно удалить будут помещены в vk_del.hmtl")
         answer_checker()
         delete_comments(get_comments_urls(get_comments_paths()))
     elif mode == '2':
