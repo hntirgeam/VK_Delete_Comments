@@ -78,7 +78,7 @@ def delete_comments(content):
         print(info_about_comment)
         if info_about_comment.count("://"):
             log_file_descriptor = open(log_file_name, "a")
-            log_file_descriptor.write("<a href=\"https://" + info_about_comment[3:] + "\">link</a></br>" + "\n")
+            log_file_descriptor.write("<a href=\"https://" + info_about_comment[3:] + "\">" + f"{info_about_comment}" + "</a></br>" + "\n")
             log_file_descriptor.close()
         try:
             vk.wall.deleteComment(owner_id=owner_id, comment_id=comment_id)
