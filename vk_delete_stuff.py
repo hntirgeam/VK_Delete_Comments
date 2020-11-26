@@ -2,10 +2,6 @@
 import os
 import vk_api
 
-print('Выберите режим работы:', '\n', '1)Удаление комментариев', '\n', '2)Удаление постов',
-      '\n', '3)Удаление и комментариев и постов')
-mode = input()
-
 
 def get_comments_paths():
     print('Введите путь к папке с комментариями (папку можно просто перетащить в окно терминала)')
@@ -47,16 +43,6 @@ def get_comments_urls(path_to_comment):
     return all_urls
 
 
-print('Для удаления комментариев и/или постов нужно авторизироваться, предварительно отключив 2fa (привязку телефона)')
-print('Введите логин:')
-user_login = input()
-print('Введите пароль:')
-user_password = input()
-vk_session = vk_api.VkApi(user_login, user_password)
-vk_session.auth()
-vk = vk_session.get_api()
-
-
 def delete_comments(content):
     i = 0
     comments_deleted = 0
@@ -93,12 +79,46 @@ def delete_wall_posts():
                 break
 
 
-if mode == '1':
-    delete_comments(get_comments_urls(get_comments_paths()))
-elif mode == '2':
-    delete_wall_posts()
-elif mode == '3':
-    delete_comments(get_comments_urls(get_comments_paths()))
-    delete_wall_posts()
-else:
-    print('Нет такого параметра')
+def answer_checker():
+    user_ans = input("Вы согласны? (y/Y): ")
+    if user_ans.lower() == "y":
+        pass
+    else:
+        print("Отмена")
+        exit(0)
+
+
+if __name__ == '__main__':
+    print('Выберите режим работы:', '\n', '1)Удаление комментариев', '\n', '2)Удаление постов',
+          '\n', '3)Удаление и комментариев и постов')
+    mode = input("Выбраный режим работы (1,2,3): ")
+
+    print(
+        'Для удаления комментариев и/или постов нужно авторизироваться, предварительно отключив 2fa (привязку телефона)')
+    print('Введите логин/номер телефона:')
+    user_login = input()
+    print('Введите пароль:')
+    user_password = input()
+    try:
+        vk_session = vk_api.VkApi(user_login, user_password)
+        vk_session.auth()
+        vk = vk_session.get_api()
+    except:
+        print("Ошибка авторизации")
+        exit(1)
+
+    if mode == '1':
+        print("Сейчас все комментарии будут удалены")
+        answer_checker()
+        delete_comments(get_comments_urls(get_comments_paths()))
+    elif mode == '2':
+        print("Сейчас все посты будут удалены")
+        answer_checker()
+        delete_wall_posts()
+    elif mode == '3':
+        print("Сейчас все комментарии и посты будут удалены")
+        answer_checker()
+        delete_comments(get_comments_urls(get_comments_paths()))
+        delete_wall_posts()
+    else:
+        print('Нет такого параметра')
