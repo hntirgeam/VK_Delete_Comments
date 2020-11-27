@@ -1,17 +1,15 @@
+#!/usr/bin/env python3
 # coding=utf-8
-import os
-import vk_api
 
-print('Выберите режим работы:', '\n', '1)Удаление комментариев', '\n', '2)Удаление постов',
-      '\n', '3)Удаление и комментариев и постов')
-mode = input()
+from os import path, remove, scandir
+import vk_api
 
 
 def get_comments_paths():
     print('Введите путь к папке с комментариями (папку можно просто перетащить в окно терминала)')
     folder_path = input()
 
-    user_files = [f.name for f in os.scandir(folder_path)]
+    user_files = [f.name for f in scandir(folder_path)]
     print('Загружены файлы:')
     paths_to_comments = []
     for file in user_files:
@@ -47,20 +45,27 @@ def get_comments_urls(path_to_comment):
     return all_urls
 
 
-print('Для удаления комментариев и/или постов нужно авторизироваться, предварительно отключив 2fa (привязку телефона)')
-print('Введите логин:')
-user_login = input()
-print('Введите пароль:')
-user_password = input()
-vk_session = vk_api.VkApi(user_login, user_password)
-vk_session.auth()
-vk = vk_session.get_api()
+def create_html_log_template():
+    log_file_descriptor = open(log_file_name, "w+")
+    log_file_descriptor.write('''
+    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+    <HEAD>
+        <TITLE>VK deletion log</TITLE>
+    </HEAD>
+    <BODY>
+    ''')
+    log_file_descriptor.close()
 
 
 def delete_comments(content):
     i = 0
     comments_deleted = 0
     comments_not_deleted = 0
+
+    create_html_log_template()
+
     while i < len(content):
         str1 = content[i]
         i += 1
@@ -69,7 +74,12 @@ def delete_comments(content):
             comment_id = str1[(str1.find('reply=') + 6):str1.find('&')]
         else:
             comment_id = str1[(str1.find('reply=') + 6):]
-        print(owner_id, comment_id)
+        info_about_comment = f"{owner_id}{comment_id}"
+        print(info_about_comment)
+        if info_about_comment.count("://"):
+            log_file_descriptor = open(log_file_name, "a")
+            log_file_descriptor.write("<a href=\"https://" + info_about_comment[3:] + "\">" + f"{info_about_comment}" + "</a></br>" + "\n")
+            log_file_descriptor.close()
         try:
             vk.wall.deleteComment(owner_id=owner_id, comment_id=comment_id)
             comments_deleted += 1
@@ -93,12 +103,61 @@ def delete_wall_posts():
                 break
 
 
-if mode == '1':
-    delete_comments(get_comments_urls(get_comments_paths()))
-elif mode == '2':
-    delete_wall_posts()
-elif mode == '3':
-    delete_comments(get_comments_urls(get_comments_paths()))
-    delete_wall_posts()
-else:
-    print('Нет такого параметра')
+def answer_checker():
+    user_ans = input("Вы согласны? (y/Y): ")
+    if user_ans.lower() == "y":
+        pass
+    else:
+        print("Отмена")
+        exit(0)
+
+
+def vk_json_remover():
+    if path.exists("vk_config.v2.json"):
+        try:
+            remove("vk_config.v2.json")
+        except:
+            print("Ошибка при удалении файла vk_config.v2.json")
+
+
+if __name__ == '__main__':
+    log_file_name = 'vk_del.html'
+    print('Выберите режим работы:', '\n', '1)Удаление комментариев', '\n', '2)Удаление постов',
+          '\n', '3)Удаление комментариев и постов')
+    
+    mode = input("Выбраный режим работы (1,2,3): ")
+    if mode not in ("1", "2", "3"):
+        print('Нет такого параметра')
+        exit(1)
+
+    print(
+        'Для удаления комментариев и/или постов нужно авторизироваться, предварительно отключив 2fa (привязку телефона)')
+    print('Введите логин/номер телефона:')
+    user_login = input()
+    print('Введите пароль:')
+    user_password = input()
+    try:
+        vk_session = vk_api.VkApi(user_login, user_password)
+        vk_session.auth()
+        vk = vk_session.get_api()
+    except:
+        print("Ошибка авторизации")
+        exit(1)
+
+    if mode == '1':
+        print("Сейчас все комментарии будут удалены")
+        print("Ссылки на комментарии, которые невозможно удалить будут помещены в vk_del.html")
+        answer_checker()
+        delete_comments(get_comments_urls(get_comments_paths()))
+        vk_json_remover()
+    elif mode == '2':
+        print("Сейчас все посты будут удалены")
+        answer_checker()
+        delete_wall_posts()
+        vk_json_remover()
+    elif mode == '3':
+        print("Сейчас все комментарии и посты будут удалены")
+        answer_checker()
+        delete_comments(get_comments_urls(get_comments_paths()))
+        delete_wall_posts()
+        vk_json_remover()
