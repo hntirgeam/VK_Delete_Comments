@@ -2,13 +2,20 @@
 import os
 import vk_api
 
+print('Для удаления комментариев и/или постов нужно авторизироваться, предварительно отключив 2fa (привязку телефона)')
+
+access_token = input('Введите свой VK API access_token (берется по ссылке в описании, начинается с "vk"): ')
+
+vk_session = vk_api.VkApi(token=access_token)
+vk = vk_session.get_api()
+
 print('Выберите режим работы:', '\n', '1)Удаление комментариев', '\n', '2)Удаление постов',
       '\n', '3)Удаление и комментариев и постов')
 mode = input()
 
 
 def get_comments_paths():
-    print('Введите путь к папке с комментариями (папку можно просто перетащить в окно терминала)')
+    print('Введите путь к папке с комментариями без кавычек (папку можно просто перетащить в окно терминала)')
     folder_path = input()
 
     user_files = [f.name for f in os.scandir(folder_path)]
@@ -47,14 +54,6 @@ def get_comments_urls(path_to_comment):
     return all_urls
 
 
-print('Для удаления комментариев и/или постов нужно авторизироваться, предварительно отключив 2fa (привязку телефона)')
-print('Введите логин:')
-user_login = input()
-print('Введите пароль:')
-user_password = input()
-vk_session = vk_api.VkApi(user_login, user_password)
-vk_session.auth()
-vk = vk_session.get_api()
 
 
 def delete_comments(content):
@@ -74,8 +73,9 @@ def delete_comments(content):
             vk.wall.deleteComment(owner_id=owner_id, comment_id=comment_id)
             comments_deleted += 1
             print("Удалено", comments_deleted)
-        except:
+        except Exception as e:
             comments_not_deleted += 1
+            print(e)
             print("Не удалено", comments_not_deleted)
 
 
@@ -88,8 +88,8 @@ def delete_wall_posts():
                 post_id = posts["items"][posts_index]["id"]
                 vk.wall.delete(post_id=post_id)
                 posts_index += 1
-            except:
-                print('Что-то пошло не так')
+            except Exception as e:
+                print('Что-то пошло не так: -', e)
                 break
 
 
